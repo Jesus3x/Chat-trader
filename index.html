@@ -3,97 +3,187 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat Firebase</title>
+  <title>Chat Firebase - Estilo WhatsApp</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0055aa" />
+  <meta name="theme-color" content="#075e54" />
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <style>
+    /* Reset e base */
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f4f8;
-      max-width: 500px;
+      background: #ece5dd;
+      max-width: 600px;
       margin: auto;
-      padding: 20px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
     h2 {
+      background: #075e54;
+      color: white;
+      margin: 0;
+      padding: 15px 20px;
+      font-weight: normal;
+      font-size: 1.3rem;
       text-align: center;
-      color: #222;
+      user-select: none;
     }
+
     #messages {
-      background: white;
-      border-radius: 8px;
-      padding: 10px;
-      height: 350px;
+      flex: 1;
       overflow-y: auto;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      margin-bottom: 10px;
+      padding: 10px;
+      background: url('https://i.imgur.com/8t5VNtG.png') repeat;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
+
+    /* Estilo das mensagens */
     .msg {
+      max-width: 75%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-size: 15px;
+      line-height: 1.4;
       position: relative;
-      padding: 8px 40px 8px 10px;
-      border-bottom: 1px solid #eee;
+      word-wrap: break-word;
+      box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
     }
-    .msg:last-child {
-      border-bottom: none;
+
+    .msg.sent {
+      background-color: #dcf8c6;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+      text-align: right;
+      color: #000;
     }
+
+    .msg.received {
+      background-color: white;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+      color: #000;
+    }
+
     .msg .name {
       font-weight: bold;
-      color: #0055aa;
+      color: #075e54;
+      display: block;
+      margin-bottom: 4px;
     }
+
     .msg .time {
-      font-size: 0.75em;
-      color: #888;
-      margin-left: 6px;
+      font-size: 0.7em;
+      color: #666;
+      margin-top: 6px;
+      display: inline-block;
+      opacity: 0.7;
     }
-    .msg .text {
-      margin-top: 4px;
-      font-size: 1em;
-      color: #333;
-    }
+
+    /* Botão apagar */
     .delete-btn {
       position: absolute;
-      right: 10px;
       top: 8px;
+      right: 10px;
       background: transparent;
       border: none;
       color: #cc0000;
       font-weight: bold;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 18px;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      user-select: none;
     }
-    input, button {
-      font-size: 16px;
-      padding: 10px;
-      margin-top: 8px;
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 5px;
+    .delete-btn:hover {
+      opacity: 1;
+    }
+
+    /* Formulário */
+    .input-area {
+      display: flex;
+      padding: 10px 15px;
+      background-color: #f0f0f0;
+      gap: 10px;
+      align-items: center;
+      user-select: none;
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 20px;
       border: 1px solid #ccc;
-    }
-    input:focus {
-      border-color: #0055aa;
+      font-size: 15px;
       outline: none;
+      transition: border-color 0.3s ease;
     }
-    button {
-      background-color: #0055aa;
-      color: white;
+    .input-area input[type="text"]:focus {
+      border-color: #075e54;
+    }
+
+    .input-area button {
+      background-color: #075e54;
       border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      color: white;
+      font-size: 22px;
       cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #004080;
+    .input-area button:hover {
+      background-color: #128c7e;
+    }
+
+    /* Para o input do nome */
+    #username {
+      margin: 10px 15px;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      outline: none;
+      width: calc(100% - 30px);
+      transition: border-color 0.3s ease;
+    }
+    #username:focus {
+      border-color: #075e54;
+    }
+
+    /* Scroll personalizado (opcional) */
+    #messages::-webkit-scrollbar {
+      width: 8px;
+    }
+    #messages::-webkit-scrollbar-thumb {
+      background-color: rgba(7, 94, 84, 0.4);
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <h2>💬 Chat em Tempo Real</h2>
+
+  <input type="text" id="username" placeholder="Seu nome" autocomplete="off" />
+
   <div id="messages"></div>
-  <input type="text" id="username" placeholder="Seu nome" />
-  <input type="text" id="message" placeholder="Digite uma mensagem" />
-  <button onclick="sendMessage()">Enviar</button>
+
+  <div class="input-area">
+    <input type="text" id="message" placeholder="Digite uma mensagem" autocomplete="off" />
+    <button onclick="sendMessage()" aria-label="Enviar mensagem">➤</button>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -116,34 +206,51 @@
     }
 
     function sendMessage() {
-      const username = document.getElementById("username").value.trim();
-      const message = document.getElementById("message").value.trim();
-      if (!username || !message) return alert("Preencha nome e mensagem.");
+      const usernameInput = document.getElementById("username");
+      const messageInput = document.getElementById("message");
+
+      const username = usernameInput.value.trim();
+      const message = messageInput.value.trim();
+
+      if (!username) {
+        alert("Por favor, preencha seu nome.");
+        usernameInput.focus();
+        return;
+      }
+      if (!message) {
+        alert("Por favor, digite uma mensagem.");
+        messageInput.focus();
+        return;
+      }
+
       messagesRef.push({
         name: username,
         text: message,
         time: Date.now()
       });
-      document.getElementById("message").value = "";
+
+      messageInput.value = "";
+      messageInput.focus();
     }
 
     function renderMessage(key, msg) {
       const container = document.getElementById("messages");
+
+      // Determinar se é mensagem enviada ou recebida
+      const username = document.getElementById("username").value.trim();
+      const isSent = username && msg.name === username;
+
       const msgEl = document.createElement("div");
-      msgEl.className = "msg";
+      msgEl.className = "msg " + (isSent ? "sent" : "received");
       msgEl.id = key;
 
-      const name = document.createElement("span");
-      name.className = "name";
-      name.textContent = msg.name;
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "name";
+      nameSpan.textContent = msg.name;
 
-      const time = document.createElement("span");
-      time.className = "time";
-      time.textContent = formatTime(msg.time || Date.now());
-
-      const text = document.createElement("div");
-      text.className = "text";
-      text.textContent = msg.text;
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = formatTime(msg.time || Date.now());
 
       const del = document.createElement("button");
       del.className = "delete-btn";
@@ -155,10 +262,15 @@
         }
       };
 
-      msgEl.appendChild(name);
-      msgEl.appendChild(time);
+      const textDiv = document.createElement("div");
+      textDiv.className = "text";
+      textDiv.textContent = msg.text;
+
+      msgEl.appendChild(nameSpan);
+      msgEl.appendChild(timeSpan);
       msgEl.appendChild(del);
-      msgEl.appendChild(text);
+      msgEl.appendChild(textDiv);
+
       container.appendChild(msgEl);
       container.scrollTop = container.scrollHeight;
     }
