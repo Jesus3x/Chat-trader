@@ -2,30 +2,119 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat ao Vivo</title>
+  <title>Chat ao Vivo — Jesus3x</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #chatBox { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-    #msgInput { width: 80%; padding: 8px; }
-    button { padding: 8px 12px; margin-left: 5px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      margin: 20px auto;
+      max-width: 600px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    h2 {
+      text-align: center;
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    #chatBox {
+      height: 400px;
+      overflow-y: auto;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      background-color: rgba(255,255,255,0.1);
+      padding: 15px;
+      font-size: 1.2rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+    }
+    #chatBox p {
+      margin: 0.4rem 0;
+    }
+    #chatBox strong {
+      color: #ffd700;
+    }
+    input#msgInput {
+      width: 75%;
+      padding: 12px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      box-shadow: 0 0 10px #2575fc;
+      margin-right: 10px;
+      transition: box-shadow 0.3s ease;
+    }
+    input#msgInput:focus {
+      box-shadow: 0 0 15px #ffd700;
+    }
+    button {
+      background: #ffd700;
+      border: none;
+      color: #333;
+      font-weight: 700;
+      padding: 12px 18px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.6);
+      user-select: none;
+    }
+    button:hover {
+      background: #ffea00;
+      box-shadow: 0 6px 18px rgba(255, 234, 0, 0.8);
+    }
+    #loginBtn, #notifyBtn {
+      width: 48%;
+      margin-bottom: 15px;
+    }
+    #buttonsWrapper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 480px) {
+      #chatBox {
+        height: 300px;
+      }
+      input#msgInput {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      #buttonsWrapper {
+        flex-direction: column;
+      }
+      #loginBtn, #notifyBtn {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>Chat ao Vivo</h2>
+  <h2>Chat ao Vivo — Jesus3x</h2>
 
-  <button id="loginBtn">Login com Google</button>
-  <button id="notifyBtn">Ativar Notificações</button>
+  <div id="buttonsWrapper">
+    <button id="loginBtn">Login com Google</button>
+    <button id="notifyBtn">Ativar Notificações</button>
+  </div>
 
   <div id="chatBox"></div>
-  <input id="msgInput" placeholder="Digite sua mensagem" />
+
+  <input id="msgInput" placeholder="Digite sua mensagem" autocomplete="off" />
   <button id="sendBtn">Enviar</button>
 
   <script>
-    // Sua configuração Firebase aqui
+    // Configuração Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
       authDomain: "chat-trader.firebaseapp.com",
@@ -36,7 +125,6 @@
       measurementId: "G-N36TE38K29"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
@@ -54,7 +142,7 @@
         });
     }
 
-    // Login com Google
+    // Login Google
     document.getElementById('loginBtn').onclick = async () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
@@ -65,23 +153,23 @@
       }
     };
 
-    // Ativar notificações
+    // Ativar notificações push
     document.getElementById('notifyBtn').onclick = async () => {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         try {
           const token = await messaging.getToken({ vapidKey: "SUA_PUBLIC_VAPID_KEY" });
-          console.log('Token para notificações:', token);
+          console.log('Token de notificação:', token);
           alert('Notificações ativadas!');
         } catch (error) {
-          alert('Erro ao obter token de notificações: ' + error.message);
+          alert('Erro ao obter token: ' + error.message);
         }
       } else {
-        alert('Permissão de notificações negada.');
+        alert('Permissão negada para notificações.');
       }
     };
 
-    // Função para atualizar chat
+    // Atualiza o chat em tempo real
     function atualizarChat() {
       db.collection('chat').orderBy('timestamp', 'asc')
         .onSnapshot(snapshot => {
@@ -95,7 +183,7 @@
         });
     }
 
-    // Quando usuário estiver logado, permite enviar mensagens
+    // Evento auth state
     auth.onAuthStateChanged(user => {
       if (!user) {
         alert('Faça login primeiro.');
