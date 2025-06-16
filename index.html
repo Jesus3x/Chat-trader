@@ -1,37 +1,90 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chat Firebase</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-      background: #f2f2f2;
-    }
-    #messages {
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 300px;
-      overflow-y: auto;
-      background: white;
-      margin-bottom: 10px;
-    }
-    .msg {
-      margin-bottom: 10px;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin-top: 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat Firebase Melhorado</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 500px;
+    margin: auto;
+    background: #f0f4f8;
+    padding: 20px;
+  }
+  h2 {
+    text-align: center;
+    color: #222;
+  }
+  #messages {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    height: 350px;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgb(0 0 0 / 0.1);
+    margin-bottom: 10px;
+  }
+  .msg {
+    position: relative;
+    padding: 8px 40px 8px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .msg:last-child {
+    border-bottom: none;
+  }
+  .msg .name {
+    font-weight: 700;
+    color: #0055aa;
+  }
+  .msg .time {
+    font-size: 0.75em;
+    color: #888;
+    margin-left: 6px;
+  }
+  .msg .text {
+    margin-top: 4px;
+    font-size: 1em;
+    color: #333;
+  }
+  .delete-btn {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    background: transparent;
+    border: none;
+    color: #cc0000;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  input, button {
+    font-size: 16px;
+    padding: 10px;
+    margin-top: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  input:focus {
+    border-color: #0055aa;
+    outline: none;
+  }
+  button {
+    background-color: #0055aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #004080;
+  }
+</style>
 </head>
 <body>
   <h2>💬 Chat em Tempo Real</h2>
@@ -40,44 +93,88 @@
   <input type="text" id="message" placeholder="Digite uma mensagem" />
   <button onclick="sendMessage()">Enviar</button>
 
-  <script>
-    // Sua configuração Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
-      authDomain: "chat-trader.firebaseapp.com",
-      projectId: "chat-trader",
-      storageBucket: "chat-trader.firebasestorage.app",
-      messagingSenderId: "722204996123",
-      appId: "1:722204996123:web:3b0cf65b13969d01e0bebe",
-      measurementId: "G-1PD8VJJH3E"
+<script>
+  // Firebase config (sua configuração)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
+    authDomain: "chat-trader.firebaseapp.com",
+    projectId: "chat-trader",
+    storageBucket: "chat-trader.firebasestorage.app",
+    messagingSenderId: "722204996123",
+    appId: "1:722204996123:web:3b0cf65b13969d01e0bebe",
+    measurementId: "G-1PD8VJJH3E"
+  };
+
+  // Inicializa Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const messagesRef = db.ref("messages");
+
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  }
+
+  function sendMessage() {
+    const username = document.getElementById("username").value.trim();
+    const message = document.getElementById("message").value.trim();
+    if (!username || !message) return alert("Por favor, preencha nome e mensagem.");
+    const now = Date.now();
+    messagesRef.push({
+      name: username,
+      text: message,
+      time: now
+    });
+    document.getElementById("message").value = "";
+  }
+
+  // Renderiza mensagem na tela
+  function renderMessage(key, msg) {
+    const messagesDiv = document.getElementById("messages");
+
+    const msgEl = document.createElement("div");
+    msgEl.className = "msg";
+    msgEl.id = key;
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "name";
+    nameSpan.textContent = msg.name;
+
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "time";
+    timeSpan.textContent = formatTime(msg.time || Date.now());
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "text";
+    textDiv.textContent = msg.text;
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete-btn";
+    delBtn.textContent = "×";
+    delBtn.title = "Deletar mensagem";
+    delBtn.onclick = () => {
+      if(confirm("Deseja apagar essa mensagem?")) {
+        messagesRef.child(key).remove();
+      }
     };
 
-    // Inicializa o Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const messagesRef = db.ref("messages");
+    msgEl.appendChild(nameSpan);
+    msgEl.appendChild(timeSpan);
+    msgEl.appendChild(delBtn);
+    msgEl.appendChild(textDiv);
 
-    // Função para enviar mensagem
-    function sendMessage() {
-      const username = document.getElementById("username").value.trim();
-      const message = document.getElementById("message").value.trim();
-      if (username && message) {
-        messagesRef.push({ name: username, text: message });
-        document.getElementById("message").value = "";
-      }
-    }
+    messagesDiv.appendChild(msgEl);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
 
-    // Recebe mensagens em tempo real e atualiza a lista
-    messagesRef.on("child_added", (snapshot) => {
-      const msg = snapshot.val();
-      const msgEl = document.createElement("div");
-      msgEl.className = "msg";
-      msgEl.textContent = `${msg.name}: ${msg.text}`;
-      document.getElementById("messages").appendChild(msgEl);
-      // Rola para a última mensagem
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  </script>
+  // Atualiza mensagens em tempo real
+  messagesRef.on("child_added", snapshot => {
+    renderMessage(snapshot.key, snapshot.val());
+  });
+  messagesRef.on("child_removed", snapshot => {
+    const msgEl = document.getElementById(snapshot.key);
+    if (msgEl) msgEl.remove();
+  });
+</script>
 </body>
 </html>
