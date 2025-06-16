@@ -1,34 +1,16 @@
+// Configuração do Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
+  authDomain: "chat-trader.firebaseapp.com",
+  projectId: "chat-trader",
+  storageBucket: "chat-trader.firebasestorage.app",
+  messagingSenderId: "722204996123",
+  appId: "1:722204996123:web:3b0cf65b13969d01e0bebe",
+  measurementId: "G-1PD8VJJH3E"
+};
+
+// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 const auth = firebase.auth();
-
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    alert("Faça login primeiro.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  document.getElementById('sendBtn').onclick = async () => {
-    const msg = document.getElementById('msgInput').value;
-    if (msg.trim()) {
-      await db.collection('chat').add({
-        user: user.displayName,
-        message: msg,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      document.getElementById('msgInput').value = '';
-    }
-  };
-
-  db.collection('chat').orderBy('timestamp', 'asc').onSnapshot(snapshot => {
-    const chatBox = document.getElementById('chatBox');
-    chatBox.innerHTML = '';
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      chatBox.innerHTML += `<p><strong>${data.user}:</strong> ${data.message}</p>`;
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
-});
