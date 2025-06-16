@@ -2,22 +2,133 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chat Trader</title>
 
-  <!-- Firebase SDKs (compat para usar versões antigas com scripts no HTML) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #f0f2f5;
+      color: #333;
+    }
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    #loginBtn, #notifyBtn {
+      margin: 0.5rem 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background-color: #2980b9;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+    #loginBtn:hover, #notifyBtn:hover {
+      background-color: #1f618d;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      background: #fafafa;
+    }
+    .message {
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .message.user {
+      background-color: #3498db;
+      color: white;
+      align-self: flex-end;
+    }
+    .message.bot {
+      background-color: #ecf0f1;
+      color: #333;
+      align-self: flex-start;
+    }
+    form {
+      display: flex;
+      gap: 0.5rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #2980b9;
+    }
+    button.sendBtn {
+      padding: 0 1rem;
+      font-size: 1.2rem;
+      border: none;
+      background-color: #27ae60;
+      color: white;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button.sendBtn:hover {
+      background-color: #1e8449;
+    }
+  </style>
 </head>
 <body>
-  <h1>🔥 Chat Trader</h1>
+  <header>🔥 Chat Trader</header>
 
-  <button id="loginBtn">Entrar com Google</button>
-  <button id="notifyBtn">Ativar Notificações</button>
+  <div style="text-align:center; margin: 1rem;">
+    <button id="loginBtn">Entrar com Google</button>
+    <button id="notifyBtn">Ativar Notificações</button>
+  </div>
+
+  <main>
+    <div id="messages"></div>
+
+    <form id="chatForm">
+      <input type="text" id="messageInput" placeholder="Digite sua mensagem..." autocomplete="off" />
+      <button type="submit" class="sendBtn">▶️</button>
+    </form>
+  </main>
 
   <script>
-    // Configuração do Firebase
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
       authDomain: "chat-trader.firebaseapp.com",
@@ -27,13 +138,25 @@
       appId: "1:722204996123:web:6ab7fd6a6b5646c3e0bebe",
       measurementId: "G-N36TE38K29"
     };
-
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const messaging = firebase.messaging();
 
-    // Autenticação Google
+    // UI Elements
+    const messagesDiv = document.getElementById('messages');
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+
+    // Função para mostrar mensagem no chat
+    function addMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', sender);
+      msgDiv.textContent = text;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Login Google
     document.getElementById('loginBtn').onclick = async () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
@@ -74,13 +197,27 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('firebase-messaging-sw.js')
         .then(reg => {
-          console.log('Service Worker registrado com sucesso:', reg);
+          console.log('Service Worker registrado:', reg);
           messaging.useServiceWorker(reg);
         })
         .catch(err => {
           console.error('Erro ao registrar Service Worker:', err);
         });
     }
+
+    // Enviar mensagem (exemplo simples, só adiciona na tela)
+    chatForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      addMessage(msg, 'user');
+      messageInput.value = '';
+
+      // Aqui você pode integrar a lógica do chat, backend ou IA para responder
+      setTimeout(() => {
+        addMessage('Resposta automática: ' + msg, 'bot');
+      }, 800);
+    });
   </script>
 </body>
 </html>
