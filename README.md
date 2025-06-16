@@ -1,0 +1,1 @@
+chat trader começou
