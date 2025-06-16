@@ -2,30 +2,30 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat ao Vivo com Notificações</title>
+  <title>Chat ao Vivo</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
   <style>
-    #chatBox {
-      height: 300px;
-      overflow: auto;
-      border: 1px solid #ccc;
-      padding: 8px;
-      margin-bottom: 10px;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #chatBox { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    #msgInput { width: 80%; padding: 8px; }
+    button { padding: 8px 12px; margin-left: 5px; }
   </style>
 </head>
 <body>
   <h2>Chat ao Vivo</h2>
+
   <button id="loginBtn">Login com Google</button>
+  <button id="notifyBtn">Ativar Notificações</button>
+
   <div id="chatBox"></div>
   <input id="msgInput" placeholder="Digite sua mensagem" />
   <button id="sendBtn">Enviar</button>
-  <button id="notifyBtn">Ativar Notificações</button>
 
   <script>
+    // Sua configuração Firebase aqui
     const firebaseConfig = {
       apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
       authDomain: "chat-trader.firebaseapp.com",
@@ -36,91 +36,87 @@
       measurementId: "G-N36TE38K29"
     };
 
+    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
+
     const auth = firebase.auth();
     const db = firebase.firestore();
     const messaging = firebase.messaging();
 
-    // Registrar o Service Worker
+    // Registrar Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
         .then(registration => {
           console.log('Service Worker registrado:', registration);
-          messaging.useServiceWorker(registration);
         })
-        .catch(err => console.error('Erro ao registrar Service Worker:', err));
+        .catch(err => {
+          console.error('Erro ao registrar service worker:', err);
+        });
     }
 
-    // Login Google
+    // Login com Google
     document.getElementById('loginBtn').onclick = async () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         await auth.signInWithPopup(provider);
         alert('Logado com sucesso!');
-        loadChat();
-      } catch (err) {
-        alert('Erro no login: ' + err.message);
+      } catch (error) {
+        alert('Erro no login: ' + error.message);
       }
     };
 
-    // Controlar estado de autenticação
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loadChat();
-      } else {
-        document.getElementById('chatBox').innerHTML = 'Faça login para ver o chat.';
-      }
-    });
-
-    // Enviar mensagem
-    document.getElementById('sendBtn').onclick = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        alert('Faça login primeiro.');
-        return;
-      }
-      const msg = document.getElementById('msgInput').value.trim();
-      if (msg) {
-        await db.collection('chat').add({
-          user: user.displayName,
-          message: msg,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('msgInput').value = '';
-      }
-    };
-
-    // Mostrar mensagens do chat em tempo real
-    function loadChat() {
-      db.collection('chat').orderBy('timestamp', 'asc').onSnapshot(snapshot => {
-        const chatBox = document.getElementById('chatBox');
-        chatBox.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '';
-          chatBox.innerHTML += `<p><strong>${data.user} [${time}]:</strong> ${data.message}</p>`;
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-      });
-    }
-
-    // Ativar notificações push
+    // Ativar notificações
     document.getElementById('notifyBtn').onclick = async () => {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         try {
-          // Troque pelo seu VAPID Key do Firebase
           const token = await messaging.getToken({ vapidKey: "SUA_PUBLIC_VAPID_KEY" });
           console.log('Token para notificações:', token);
           alert('Notificações ativadas!');
-          // Aqui pode enviar o token para seu backend se quiser
-        } catch (err) {
-          alert('Erro ao obter token: ' + err.message);
+        } catch (error) {
+          alert('Erro ao obter token de notificações: ' + error.message);
         }
       } else {
-        alert('Permissão para notificações negada.');
+        alert('Permissão de notificações negada.');
       }
     };
+
+    // Função para atualizar chat
+    function atualizarChat() {
+      db.collection('chat').orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+          const chatBox = document.getElementById('chatBox');
+          chatBox.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            chatBox.innerHTML += `<p><strong>${data.user}:</strong> ${data.message}</p>`;
+          });
+          chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+    // Quando usuário estiver logado, permite enviar mensagens
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert('Faça login primeiro.');
+        return;
+      }
+
+      atualizarChat();
+
+      document.getElementById('sendBtn').onclick = async () => {
+        const msgInput = document.getElementById('msgInput');
+        const msg = msgInput.value.trim();
+        if (msg) {
+          await db.collection('chat').add({
+            user: user.displayName,
+            message: msg,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          msgInput.value = '';
+        }
+      };
+    });
   </script>
 </body>
 </html>
