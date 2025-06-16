@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat ao Vivo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    #chatBox {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+    }
+    #msgInput {
+      width: 80%;
+      padding: 8px;
+      font-size: 16px;
+    }
+    #sendBtn, #loginBtn, #logoutBtn {
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    #logoutBtn {
+      background: #d9534f;
+      color: white;
+      border: none;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+</head>
+<body>
+
+  <h2>Chat ao Vivo</h2>
+
+  <button id="loginBtn">Login com Google</button>
+  <button id="logoutBtn" style="display:none;">Sair</button>
+
+  <div id="userInfo" style="margin:10px 0; font-weight:bold;"></div>
+
+  <div id="chatBox"></div>
+
+  <input id="msgInput" placeholder="Digite sua mensagem" disabled />
+  <button id="sendBtn" disabled>Enviar</button>
+
+  <script>
+    // Sua configuração Firebase aqui
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
+      authDomain: "chat-trader.firebaseapp.com",
+      projectId: "chat-trader",
+      storageBucket: "chat-trader.firebasestorage.app",
+      messagingSenderId: "722204996123",
+      appId: "1:722204996123:web:6ab7fd6a6b5646c3e0bebe",
+      measurementId: "G-N36TE38K29"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const chatBox = document.getElementById('chatBox');
+    const msgInput = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Atualiza interface dependendo do estado do login
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userInfo.textContent = `Olá, ${user.displayName}`;
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        msgInput.disabled = false;
+        sendBtn.disabled = false;
+
+        // Escutar mensagens do Firestore em tempo real
+        db.collection('chat')
+          .orderBy('timestamp', 'asc')
+          .onSnapshot(snapshot => {
+            chatBox.innerHTML = '';
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '';
+              chatBox.innerHTML += `<p><strong>${data.user}</strong> [${time}]: ${data.message}</p>`;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+          });
+      } else {
+        userInfo.textContent = 'Você não está logado.';
+        loginBtn.style.display = 'inline-block';
+        logoutBtn.style.display = 'none';
+        msgInput.disabled = true;
+        sendBtn.disabled = true;
+        chatBox.innerHTML = '';
+      }
+    });
+
+    // Login com Google
+    loginBtn.onclick = async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+        alert('Login realizado com sucesso!');
+      } catch (error) {
+        alert('Erro no login: ' + error.message);
+      }
+    };
+
+    // Logout
+    logoutBtn.onclick = async () => {
+      await auth.signOut();
+      alert('Você saiu da conta.');
+    };
+
+    // Enviar mensagem
+    sendBtn.onclick = async () => {
+      const msg = msgInput.value.trim();
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Faça login para enviar mensagens.');
+        return;
+      }
+      if (!msg) {
+        alert('Digite uma mensagem antes de enviar.');
+        return;
+      }
+      try {
+        await db.collection('chat').add({
+          user: user.displayName,
+          message: msg,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        msgInput.value = '';
+      } catch (error) {
+        alert('Erro ao enviar mensagem: ' + error.message);
+      }
+    };
+
+  </script>
+
+</body>
+</html>
