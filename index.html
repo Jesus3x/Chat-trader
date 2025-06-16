@@ -2,208 +2,81 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat ao Vivo — Jesus3x</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
+  <title>Chat Firebase</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
-      color: #fff;
-      margin: 20px auto;
-      max-width: 600px;
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: auto;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      background: #f2f2f2;
     }
-    h2 {
-      text-align: center;
-      font-size: 2.2rem;
-      margin-bottom: 1.5rem;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    }
-    #chatBox {
-      height: 400px;
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
       overflow-y: auto;
-      border: 2px solid #fff;
-      border-radius: 10px;
-      background-color: rgba(255,255,255,0.1);
-      padding: 15px;
-      font-size: 1.2rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
-      box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+      background: white;
+      margin-bottom: 10px;
     }
-    #chatBox p {
-      margin: 0.4rem 0;
+    .msg {
+      margin-bottom: 10px;
     }
-    #chatBox strong {
-      color: #ffd700;
-    }
-    input#msgInput {
-      width: 75%;
-      padding: 12px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 8px;
-      outline: none;
-      box-shadow: 0 0 10px #2575fc;
-      margin-right: 10px;
-      transition: box-shadow 0.3s ease;
-    }
-    input#msgInput:focus {
-      box-shadow: 0 0 15px #ffd700;
-    }
-    button {
-      background: #ffd700;
-      border: none;
-      color: #333;
-      font-weight: 700;
-      padding: 12px 18px;
-      font-size: 1.2rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.6);
-      user-select: none;
-    }
-    button:hover {
-      background: #ffea00;
-      box-shadow: 0 6px 18px rgba(255, 234, 0, 0.8);
-    }
-    #loginBtn, #notifyBtn {
-      width: 48%;
-      margin-bottom: 15px;
-    }
-    #buttonsWrapper {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    @media (max-width: 480px) {
-      #chatBox {
-        height: 300px;
-      }
-      input#msgInput {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-      #buttonsWrapper {
-        flex-direction: column;
-      }
-      #loginBtn, #notifyBtn {
-        width: 100%;
-        margin-bottom: 10px;
-      }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <h2>Chat ao Vivo — Jesus3x</h2>
-
-  <div id="buttonsWrapper">
-    <button id="loginBtn">Login com Google</button>
-    <button id="notifyBtn">Ativar Notificações</button>
-  </div>
-
-  <div id="chatBox"></div>
-
-  <input id="msgInput" placeholder="Digite sua mensagem" autocomplete="off" />
-  <button id="sendBtn">Enviar</button>
+  <h2>💬 Chat em Tempo Real</h2>
+  <div id="messages"></div>
+  <input type="text" id="username" placeholder="Seu nome" />
+  <input type="text" id="message" placeholder="Digite uma mensagem" />
+  <button onclick="sendMessage()">Enviar</button>
 
   <script>
-    // Configuração Firebase
+    // Sua configuração Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
       authDomain: "chat-trader.firebaseapp.com",
       projectId: "chat-trader",
       storageBucket: "chat-trader.firebasestorage.app",
       messagingSenderId: "722204996123",
-      appId: "1:722204996123:web:6ab7fd6a6b5646c3e0bebe",
-      measurementId: "G-N36TE38K29"
+      appId: "1:722204996123:web:3b0cf65b13969d01e0bebe",
+      measurementId: "G-1PD8VJJH3E"
     };
 
+    // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const messaging = firebase.messaging();
-
-    // Registrar Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then(registration => {
-          console.log('Service Worker registrado:', registration);
-        })
-        .catch(err => {
-          console.error('Erro ao registrar service worker:', err);
-        });
+    // Função para enviar mensagem
+    function sendMessage() {
+      const username = document.getElementById("username").value.trim();
+      const message = document.getElementById("message").value.trim();
+      if (username && message) {
+        messagesRef.push({ name: username, text: message });
+        document.getElementById("message").value = "";
+      }
     }
 
-    // Login Google
-    document.getElementById('loginBtn').onclick = async () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        await auth.signInWithPopup(provider);
-        alert('Logado com sucesso!');
-      } catch (error) {
-        alert('Erro no login: ' + error.message);
-      }
-    };
-
-    // Ativar notificações push
-    document.getElementById('notifyBtn').onclick = async () => {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        try {
-          const token = await messaging.getToken({ vapidKey: "SUA_PUBLIC_VAPID_KEY" });
-          console.log('Token de notificação:', token);
-          alert('Notificações ativadas!');
-        } catch (error) {
-          alert('Erro ao obter token: ' + error.message);
-        }
-      } else {
-        alert('Permissão negada para notificações.');
-      }
-    };
-
-    // Atualiza o chat em tempo real
-    function atualizarChat() {
-      db.collection('chat').orderBy('timestamp', 'asc')
-        .onSnapshot(snapshot => {
-          const chatBox = document.getElementById('chatBox');
-          chatBox.innerHTML = '';
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            chatBox.innerHTML += `<p><strong>${data.user}:</strong> ${data.message}</p>`;
-          });
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
-    }
-
-    // Evento auth state
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        alert('Faça login primeiro.');
-        return;
-      }
-
-      atualizarChat();
-
-      document.getElementById('sendBtn').onclick = async () => {
-        const msgInput = document.getElementById('msgInput');
-        const msg = msgInput.value.trim();
-        if (msg) {
-          await db.collection('chat').add({
-            user: user.displayName,
-            message: msg,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          msgInput.value = '';
-        }
-      };
+    // Recebe mensagens em tempo real e atualiza a lista
+    messagesRef.on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const msgEl = document.createElement("div");
+      msgEl.className = "msg";
+      msgEl.textContent = `${msg.name}: ${msg.text}`;
+      document.getElementById("messages").appendChild(msgEl);
+      // Rola para a última mensagem
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
 </body>
