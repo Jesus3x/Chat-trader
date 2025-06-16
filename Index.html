@@ -2,18 +2,85 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Plataforma de Apostas</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script src="app.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat Trader</title>
+
+  <!-- Firebase SDKs (compat para usar versões antigas com scripts no HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 </head>
 <body>
-  <h1>Bem-vindo à plataforma</h1>
+  <h1>🔥 Chat Trader</h1>
+
   <button id="loginBtn">Entrar com Google</button>
   <button id="notifyBtn">Ativar Notificações</button>
-  <a href="chat.html">Ir para o Chat ao Vivo</a>
+
+  <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAYD7DhRovj0PYHUSpOq5YE1rQXIiOPkc",
+      authDomain: "chat-trader.firebaseapp.com",
+      projectId: "chat-trader",
+      storageBucket: "chat-trader.appspot.com",
+      messagingSenderId: "722204996123",
+      appId: "1:722204996123:web:6ab7fd6a6b5646c3e0bebe",
+      measurementId: "G-N36TE38K29"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const messaging = firebase.messaging();
+
+    // Autenticação Google
+    document.getElementById('loginBtn').onclick = async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+        alert("Logado com sucesso!");
+      } catch (error) {
+        console.error("Erro no login:", error);
+        alert("Erro ao fazer login.");
+      }
+    };
+
+    // Ativar notificações
+    document.getElementById('notifyBtn').onclick = async () => {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        try {
+          const token = await messaging.getToken({
+            vapidKey: "SUA_CHAVE_PUBLICA_VAPID_AQUI"
+          });
+          console.log("Token:", token);
+          alert("Notificações ativadas!");
+        } catch (error) {
+          console.error("Erro ao obter token:", error);
+          alert("Erro ao ativar notificações.");
+        }
+      } else {
+        alert("Permissão negada para notificações.");
+      }
+    };
+
+    // Receber notificações em foreground
+    messaging.onMessage(payload => {
+      console.log("Mensagem recebida no foreground:", payload);
+      alert(`📩 ${payload.notification.title}\n${payload.notification.body}`);
+    });
+
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('firebase-messaging-sw.js')
+        .then(reg => {
+          console.log('Service Worker registrado com sucesso:', reg);
+          messaging.useServiceWorker(reg);
+        })
+        .catch(err => {
+          console.error('Erro ao registrar Service Worker:', err);
+        });
+    }
+  </script>
 </body>
 </html>
